@@ -19,7 +19,10 @@ entity tt_um_pongsterpiece is
     rst_n  : in  std_logic;
     ena    : in std_logic;
     ui_in  : in  std_logic_vector(7 downto 0);
-    uo_out : out std_logic_vector(7 downto 0)
+    uo_out : out std_logic_vector(7 downto 0);
+    uio_in  : in  std_logic_vector(7 downto 0);
+    uio_out : out std_logic_vector(7 downto 0);
+    uio_oe  : out std_logic_vector(7 downto 0)
   );
 end entity;
 
