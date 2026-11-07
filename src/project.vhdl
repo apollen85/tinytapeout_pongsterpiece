@@ -6,10 +6,11 @@ use ieee.numeric_std.all;
 -- A 32x32 white square bounces around the 640x480 visible area, updating
 -- position once per frame.
 --
--- ui_in[0]   : pause animation
--- ui_in[3:1] : ball colour (R, G, B bit each)
--- ui_in[5:4] : paddle1 up/down
--- ui_in[7:6] : paddle2 up/down
+-- ui_in[0]   : pause game (momentary)
+-- ui_in[2:1] : paddle1 up/down
+-- ui_in[3:2] : paddle2 up/down
+-- ui_in[5] : ball speed (step size)
+-- ui_in[6] : paddle speed (step size)
 --
 -- Inspired by the classic 'first VGA sprite' pattern from FPGA tutorials
 -- (Mike Field, Nandland). Original implementation for VHDLive.
@@ -30,11 +31,11 @@ architecture rtl of tt_um_pongsterpiece is
   constant H_ACT : natural := 640;
   constant V_ACT : natural := 480;
   constant BALL_SIZE  : natural := 32;
-  constant BALL_STEP_SIZE : natural := 2;
+  signal ball_step_size : natural := 2;
   constant PADDLE_WIDTH : natural := 16;
   constant PADDLE_HEIGHT : natural := 128;
   constant PADDLE_EDGE_OFFSET : natural := 32;
-  constant PADDLE_STEP_SIZE : natural := 3;
+  signal paddle_step_size : natural := 3;
 
   -- Ball parameters
   constant BALL_START_X : unsigned(9 downto 0) := to_unsigned(H_ACT/2 - BALL_SIZE/2, 10);
@@ -140,6 +141,8 @@ uio_oe  <= (others => '0');
       game_over <= '0';
       game_start_counter <= to_unsigned(0, 8);
       last_vsync <= '1';
+      ball_step_size <= 2;
+      paddle_step_size <= 3;
     elsif rising_edge(clk) then
       last_vsync <= vsync;
       if last_vsync = '1' and vsync = '0' and ui_in(0) = '0' then
@@ -157,7 +160,18 @@ uio_oe  <= (others => '0');
           else
             game_start_counter <= game_start_counter + 1;
           end if;
+
         else
+          if ui_in(5) = '0' then
+            ball_step_size <= 2;
+          else
+            ball_step_size <= 3;
+          end if;
+          if ui_in(6) = '0' then
+            paddle_step_size <= 3;
+          else
+            paddle_step_size <= 7;
+          end if;
           -- BALL LOGIC ====================================================================
           -- Vertical step
           if (vy_sign = '0' and by +BALL_SIZE >= V_ACT - 1) or (vy_sign = '1' and by = 0) then
@@ -193,9 +207,9 @@ uio_oe  <= (others => '0');
 
               vx_sign <= not vx_sign;
 
-              if ui_in(7) = '1' then -- go up
+              if ui_in(4) = '1' then -- go up
                 vy_sign <= '1';
-              elsif ui_in(6) = '1' then -- go down
+              elsif ui_in(3) = '1' then -- go down
                 vy_sign <= '0';
               end if;
           -- Collision with paddle1 (left)
@@ -227,9 +241,9 @@ uio_oe  <= (others => '0');
 
               vx_sign <= not vx_sign;
 
-              if ui_in(5) = '1' then -- go up
+              if ui_in(2) = '1' then -- go up
                 vy_sign <= '1';
-              elsif ui_in(4) = '1' then -- go down
+              elsif ui_in(1) = '1' then -- go down
                 vy_sign <= '0';
               end if;
 
@@ -237,19 +251,19 @@ uio_oe  <= (others => '0');
           end if;
           -- Set coordinates with velocities
           if vx_sign = '0' then
-            bx <= bx + vx * BALL_STEP_SIZE;
+            bx <= bx + vx * ball_step_size;
           else
-            bx <= bx - vx * BALL_STEP_SIZE;
+            bx <= bx - vx * ball_step_size;
           end if;
           if vy_sign = '0' then
-            by <= by + vy * BALL_STEP_SIZE;
+            by <= by + vy * ball_step_size;
           else
-            by <= by - vy * BALL_STEP_SIZE;
+            by <= by - vy * ball_step_size;
           end if;
 
 
           -- Collision with sides (GAME OVER)
-          if bx + BALL_SIZE >= H_ACT - 1 - BALL_STEP_SIZE or bx = BALL_STEP_SIZE then
+          if bx + BALL_SIZE >= H_ACT - 1 - ball_step_size or bx = ball_step_size then
           game_over <= '1';
             bx <= BALL_START_X;
             by <= BALL_START_Y;
@@ -260,16 +274,16 @@ uio_oe  <= (others => '0');
           
           -- END BALL LOGIC ==============================================================================================
           -- Paddle1 up/down
-          if ui_in(5) = '1' and pdl1y >= PADDLE_STEP_SIZE then
-            pdl1y <= pdl1y - PADDLE_STEP_SIZE;
-          elsif ui_in(4) = '1' and pdl1y+PADDLE_HEIGHT <= V_ACT - PADDLE_STEP_SIZE then
-            pdl1y <= pdl1y + PADDLE_STEP_SIZE;
+          if ui_in(2) = '1' and pdl1y >= paddle_step_size then
+            pdl1y <= pdl1y - paddle_step_size;
+          elsif ui_in(1) = '1' and pdl1y+PADDLE_HEIGHT <= V_ACT - paddle_step_size then
+            pdl1y <= pdl1y + paddle_step_size;
           end if;
           -- Paddle2 up/down
-          if ui_in(7) = '1' and pdl2y >= PADDLE_STEP_SIZE then
-            pdl2y <= pdl2y - PADDLE_STEP_SIZE;
-          elsif ui_in(6) = '1' and pdl2y + PADDLE_HEIGHT <= V_ACT - PADDLE_STEP_SIZE then
-            pdl2y <= pdl2y + PADDLE_STEP_SIZE;
+          if ui_in(4) = '1' and pdl2y >= paddle_step_size then
+            pdl2y <= pdl2y - paddle_step_size;
+          elsif ui_in(3) = '1' and pdl2y + PADDLE_HEIGHT <= V_ACT - paddle_step_size then
+            pdl2y <= pdl2y + paddle_step_size;
           end if;
         end if;
       end if;
@@ -277,7 +291,7 @@ uio_oe  <= (others => '0');
   end process;
 
   -- ── Pixel colour ─────────────────────────────────────────────────────────
-  process(vis, hpos, vpos, bx, by, ui_in) is
+  process(vis, hpos, vpos, bx, by) is
     variable px : unsigned(9 downto 0);
     variable py : unsigned(9 downto 0);
     variable in_ball : boolean;
@@ -296,9 +310,7 @@ uio_oe  <= (others => '0');
       in_paddle2 := (px >= pdl2x) and (px < pdl2x + PADDLE_WIDTH) and (py >= pdl2y) and (py < pdl2y + PADDLE_HEIGHT);
       in_skull := (px >= SKULL_POS_X-SKULL_WIDTH/2) and (px < SKULL_POS_X+SKULL_WIDTH/2) and (py >= SKULL_POS_Y-SKULL_WIDTH/2) and (py < SKULL_POS_Y+SKULL_WIDTH/2);
       if in_ball and game_over = '0' then
-        r <= ui_in(1) & ui_in(1);
-        g <= ui_in(2) & ui_in(2);
-        b <= ui_in(3) & ui_in(3);
+        g <= "11";
       elsif in_paddle1 then
         r <= "11";
         g <= "11";

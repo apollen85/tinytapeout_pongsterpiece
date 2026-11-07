@@ -26,14 +26,14 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: "Enable/disable animation"
-  ui[1]: "Ball colour R"
-  ui[2]: "Ball colour G"
-  ui[3]: "Ball colour B"
-  ui[4]: "Paddle1 (left) down"
-  ui[5]: "Paddle1 (left) up"
-  ui[6]: "Paddle2 (right) down"
-  ui[7]: "Paddle2 (right) up"
+  ui[0]: "Pause/play game (momentary)"
+  ui[1]: "Paddle1 (left) down"
+  ui[2]: "Paddle1 (left) up"
+  ui[3]: "Paddle2 (right) down"
+  ui[4]: "Paddle2 (right) up"
+  ui[5]: "Low/high ball speed (step size)"
+  ui[6]: "Low/high paddle speed (step size)"
+  ui[7]: "Unassigned"
 
   # Outputs
   uo[0]: "VGA"
