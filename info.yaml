@@ -1,7 +1,7 @@
 # Tiny Tapeout project information
 project:
   title:        "Pongsterpiece"      # Project title
-  author:       "TBD"      # Your name
+  author:       "apollen85, ChonkieMonkie, Rayjay_coding"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "A masterpiece of a PONG game"      # One line description of what your project does
   language:     "VHDL"  # other examples include Verilog, SystemVerilog, Amaranth, etc
@@ -26,24 +26,24 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: "Pause/play game (momentary)"
+  ui[0]: "Pause(1)/play(0) game (momentary)"
   ui[1]: "Paddle1 (left) down"
   ui[2]: "Paddle1 (left) up"
   ui[3]: "Paddle2 (right) down"
   ui[4]: "Paddle2 (right) up"
-  ui[5]: "Low/high ball speed (step size)"
-  ui[6]: "Low/high paddle speed (step size)"
+  ui[5]: "Low(0)/high(1) ball speed (step size)"
+  ui[6]: "Low(0)/high(1) paddle speed (step size)"
   ui[7]: "Unassigned"
 
   # Outputs
-  uo[0]: "VGA"
-  uo[1]: "VGA"
-  uo[2]: "VGA"
-  uo[3]: "VGA"
-  uo[4]: "VGA"
-  uo[5]: "VGA"
-  uo[6]: "VGA"
-  uo[7]: "VGA"
+  uo[0]: "VGA R1"
+  uo[1]: "VGA G1"
+  uo[2]: "VGA B1"
+  uo[3]: "VGA VSync"
+  uo[4]: "VGA R0"
+  uo[5]: "VGA G0"
+  uo[6]: "VGA B0"
+  uo[7]: "VGA HSync"
 
   # Bidirectional pins
   uio[0]: ""
