@@ -174,7 +174,7 @@ uio_oe  <= (others => '0');
           end if;
           -- BALL LOGIC ====================================================================
           -- Vertical step
-          if (vy_sign = '0' and by +BALL_SIZE >= V_ACT - 1) or (vy_sign = '1' and by = 0) then
+          if (vy_sign = '0' and by +BALL_SIZE >= V_ACT - 1 - ball_step_size*3) or (vy_sign = '1' and by <= ball_step_size*3) then
             vy_sign <= not vy_sign;
           end if;
           -- Horizontal step
@@ -263,7 +263,7 @@ uio_oe  <= (others => '0');
 
 
           -- Collision with sides (GAME OVER)
-          if bx + BALL_SIZE >= H_ACT - 1 - ball_step_size or bx = ball_step_size then
+          if bx + BALL_SIZE >= H_ACT - 1 - ball_step_size*3 or bx = ball_step_size*3 then
           game_over <= '1';
             bx <= BALL_START_X;
             by <= BALL_START_Y;
