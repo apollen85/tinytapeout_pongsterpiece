@@ -150,6 +150,10 @@ uio_oe  <= (others => '0');
             game_start_counter <= to_unsigned(0, 8);
             vx <= to_unsigned(2, 2);
             vy <= to_unsigned(2, 2);
+            vx_sign <= '0';
+            vy_sign <= '1';
+            bx <= BALL_START_X;
+            by <= BALL_START_Y;
           else
             game_start_counter <= game_start_counter + 1;
           end if;
