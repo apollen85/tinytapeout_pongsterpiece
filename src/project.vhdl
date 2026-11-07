@@ -276,6 +276,8 @@ uio_oe  <= (others => '0');
           -- Paddle1 up/down
           if ui_in(2) = '1' and pdl1y >= paddle_step_size then
             pdl1y <= pdl1y - paddle_step_size;
+          elsif ui_in(2) = '1' then
+            null;
           elsif ui_in(1) = '1' and pdl1y+PADDLE_HEIGHT <= V_ACT - paddle_step_size then
             pdl1y <= pdl1y + paddle_step_size;
           end if;
