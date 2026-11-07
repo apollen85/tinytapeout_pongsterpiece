@@ -57,8 +57,13 @@ architecture rtl of tt_um_pongsterpiece is
   signal bx : unsigned(9 downto 0) := BALL_START_X;
   signal by : unsigned(9 downto 0) := BALL_START_Y;
   -- Velocity sign: '0' = moving right/down, '1' = moving left/up
+  --Velocity : positive = moving right/down, negative = moving left/up
+  signal vx : unsigned(1 downto 0) := to_unsigned(2, 2);
   signal vx_sign : std_logic := '0';
+  signal vy : unsigned(1 downto 0) := to_unsigned(2, 2);
   signal vy_sign : std_logic := '0';
+
+
   signal last_vsync : std_logic := '1';
 
   -- Paddle 1 top-left position in active-area coords
@@ -70,9 +75,11 @@ architecture rtl of tt_um_pongsterpiece is
   signal pdl2y : unsigned(9 downto 0) := PADDLE2_START_Y;
 
   signal r, g, b : unsigned(1 downto 0);
-  signal vga_en : std_logic;
 
 begin
+
+uio_out <= (others => '0');
+uio_oe  <= (others => '0');
 
   -- ── VGA pixel counter ────────────────────────────────────────────────────
   process(clk, rst_n) is
@@ -80,18 +87,13 @@ begin
     if rst_n = '0' then
       hpos <= (others => '0');
       vpos <= (others => '0');
-      vga_en <= '0';
     elsif rising_edge(clk) then
-      vga_en <= not vga_en;
-      if vga_en = '1' then
-      -- if true then
-        if hpos = 799 then
-          hpos <= (others => '0');
-          if vpos = 524 then vpos <= (others => '0');
-          else               vpos <= vpos + 1;
-          end if;
-        else hpos <= hpos + 1;
+      if hpos = 799 then
+        hpos <= (others => '0');
+        if vpos = 524 then vpos <= (others => '0');
+        else               vpos <= vpos + 1;
         end if;
+      else hpos <= hpos + 1;
       end if;
     end if;
   end process;
@@ -102,11 +104,14 @@ begin
 
   -- ── Ball and paddle physics: advance once per frame on vsync falling edge ───────────
   process(clk, rst_n) is
+    variable impact_zone : integer range 0 to 7;
   begin
     if rst_n = '0' then
       bx <= BALL_START_X;
       by <= BALL_START_Y;
+      -- vx <= to_unsigned(2, 2);
       vx_sign <= '0';
+      -- vy <= to_unsigned(2, 2);
       vy_sign <= '0';
       pdl1y <= PADDLE1_START_Y;
       pdl2y <= PADDLE2_START_Y;
@@ -116,64 +121,98 @@ begin
       if last_vsync = '1' and vsync = '0' and ui_in(0) = '0' then
         -- BALL LOGIC ====================================================================
         -- Vertical step
-        if vy_sign = '0' then       -- moving down
-          if by + BALL_SIZE >= V_ACT - 1 then
-            vy_sign <= '1';
-            by <= by - 1;
-          else
-            by <= by + 1;
-          end if;
-        else                         -- moving up
-          if by = 0 then
-            vy_sign <= '0';
-            by <= by + 1;
-          else
-            by <= by - 1;
-          end if;
+        if (vy_sign = '0' and by +BALL_SIZE >= V_ACT - 1) or (vy_sign = '1' and by = 0) then
+          vy_sign <= not vy_sign;
         end if;
         -- Horizontal step
-        if vx_sign = '0' then       -- moving right
-          if bx + BALL_SIZE >= pdl2x and
+        -- Collision with paddle2 (right)
+        if vx_sign = '0' and
+            bx + BALL_SIZE >= pdl2x and
             bx <= pdl2x + PADDLE_WIDTH and
             by + BALL_SIZE >= pdl2y and
             by <= pdl2y + PADDLE_HEIGHT then
-            vx_sign <= '1';
-            bx <= bx - BALL_STEP_SIZE;
+
+            impact_zone := (to_integer(by)+BALL_SIZE/2-to_integer(pdl2y)) *8/PADDLE_HEIGHT;
+
+            case impact_zone is
+              when 0 =>
+                vx <= to_unsigned(1, 2);
+                vy <= to_unsigned(2, 2);
+              when 7 =>
+                vx <= to_unsigned(1, 2);
+                vy <= to_unsigned(2, 2);
+              when 3 =>
+                vx <= to_unsigned(3, 2);
+                vy <= to_unsigned(2, 2);
+              when 4 =>
+                vx <= to_unsigned(3, 2);
+                vy <= to_unsigned(2, 2);
+              when others =>
+                vx <= to_unsigned(2, 2);
+                vy <= to_unsigned(2, 2);
+            end case;
+
+            vx_sign <= not vx_sign;
+
             if ui_in(7) = '1' then -- go up
               vy_sign <= '1';
-              by <= by - 1;
             elsif ui_in(6) = '1' then -- go down
               vy_sign <= '0';
-              by <= by + 1;
             end if;
-          elsif bx + BALL_SIZE >= H_ACT - 1 then
-            -- GAME OVER
-            bx <= BALL_START_X;
-            by <= BALL_START_Y;
-          else
-            bx <= bx + BALL_STEP_SIZE;
-          end if;
-        else                         -- moving left
-          if bx >= pdl1x and
+        -- Collision with paddle1 (left)
+        elsif vx_sign = '1' and
+            bx >= pdl1x and
             bx <= pdl1x + PADDLE_WIDTH and
             by + BALL_SIZE >= pdl1y and
             by <= pdl1y + PADDLE_HEIGHT then
-            vx_sign <= '0';
-            bx <= bx + BALL_STEP_SIZE;
+
+            impact_zone := (to_integer(by)+BALL_SIZE/2-to_integer(pdl1y)) *8/PADDLE_HEIGHT;
+
+            case impact_zone is
+              when 0 =>
+                vx <= to_unsigned(1, 2);
+                vy <= to_unsigned(2, 2);
+              when 7 =>
+                vx <= to_unsigned(1, 2);
+                vy <= to_unsigned(2, 2);
+              when 3 =>
+                vx <= to_unsigned(3, 2);
+                vy <= to_unsigned(2, 2);
+              when 4 =>
+                vx <= to_unsigned(3, 2);
+                vy <= to_unsigned(2, 2);
+              when others =>
+                vx <= to_unsigned(2, 2);
+                vy <= to_unsigned(2, 2);
+            end case;
+
+            vx_sign <= not vx_sign;
+
             if ui_in(5) = '1' then -- go up
               vy_sign <= '1';
-              by <= by - 1;
             elsif ui_in(4) = '1' then -- go down
               vy_sign <= '0';
-              by <= by + 1;
             end if;
-          elsif bx = 0 then
-            -- GAME OVER
-            bx <= BALL_START_X;
-            by <= BALL_START_Y;
-          else
-            bx <= bx - BALL_STEP_SIZE;
-          end if;
+
+
+        end if;
+        -- Set coordinates with velocities
+        if vx_sign = '0' then
+          bx <= bx + vx * BALL_STEP_SIZE;
+        else
+          bx <= bx - vx * BALL_STEP_SIZE;
+        end if;
+        if vy_sign = '0' then
+          by <= by + vy * BALL_STEP_SIZE;
+        else
+          by <= by - vy * BALL_STEP_SIZE;
+        end if;
+
+
+        -- Collision with sides (GAME OVER)
+        if bx + BALL_SIZE >= H_ACT - 1 - BALL_STEP_SIZE or bx = BALL_STEP_SIZE then
+          bx <= BALL_START_X;
+          by <= BALL_START_Y;
         end if;
         
         -- END BALL LOGIC ==============================================================================================
