@@ -84,7 +84,7 @@ begin
     elsif rising_edge(clk) then
       vga_en <= not vga_en;
       if vga_en = '1' then
-    --   if true then
+      -- if true then
         if hpos = 799 then
           hpos <= (others => '0');
           if vpos = 524 then vpos <= (others => '0');
@@ -115,36 +115,6 @@ begin
       last_vsync <= vsync;
       if last_vsync = '1' and vsync = '0' and ui_in(0) = '0' then
         -- BALL LOGIC ====================================================================
-        -- Horizontal step
-        if vx_sign = '0' then       -- moving right
-          if bx + BALL_SIZE >= pdl2x and
-            bx <= pdl2x + PADDLE_WIDTH and
-            by + BALL_SIZE >= pdl2y and
-            by <= pdl2y + PADDLE_HEIGHT then
-            vx_sign <= '1';
-            bx <= bx - BALL_STEP_SIZE;
-          elsif bx + BALL_SIZE >= H_ACT - 1 then
-            -- GAME OVER
-            bx <= BALL_START_X;
-            by <= BALL_START_Y;
-          else
-            bx <= bx + BALL_STEP_SIZE;
-          end if;
-        else                         -- moving left
-          if bx >= pdl1x and
-            bx <= pdl1x + PADDLE_WIDTH and
-            by + BALL_SIZE >= pdl1y and
-            by <= pdl1y + PADDLE_HEIGHT then
-            vx_sign <= '0';
-            bx <= bx + BALL_STEP_SIZE;
-          elsif bx = 0 then
-            -- GAME OVER
-            bx <= BALL_START_X;
-            by <= BALL_START_Y;
-          else
-            bx <= bx - BALL_STEP_SIZE;
-          end if;
-        end if;
         -- Vertical step
         if vy_sign = '0' then       -- moving down
           if by + BALL_SIZE >= V_ACT - 1 then
@@ -161,6 +131,51 @@ begin
             by <= by - 1;
           end if;
         end if;
+        -- Horizontal step
+        if vx_sign = '0' then       -- moving right
+          if bx + BALL_SIZE >= pdl2x and
+            bx <= pdl2x + PADDLE_WIDTH and
+            by + BALL_SIZE >= pdl2y and
+            by <= pdl2y + PADDLE_HEIGHT then
+            vx_sign <= '1';
+            bx <= bx - BALL_STEP_SIZE;
+            if ui_in(7) = '1' then -- go up
+              vy_sign <= '1';
+              by <= by - 1;
+            elsif ui_in(6) = '1' then -- go down
+              vy_sign <= '0';
+              by <= by + 1;
+            end if;
+          elsif bx + BALL_SIZE >= H_ACT - 1 then
+            -- GAME OVER
+            bx <= BALL_START_X;
+            by <= BALL_START_Y;
+          else
+            bx <= bx + BALL_STEP_SIZE;
+          end if;
+        else                         -- moving left
+          if bx >= pdl1x and
+            bx <= pdl1x + PADDLE_WIDTH and
+            by + BALL_SIZE >= pdl1y and
+            by <= pdl1y + PADDLE_HEIGHT then
+            vx_sign <= '0';
+            bx <= bx + BALL_STEP_SIZE;
+            if ui_in(5) = '1' then -- go up
+              vy_sign <= '1';
+              by <= by - 1;
+            elsif ui_in(4) = '1' then -- go down
+              vy_sign <= '0';
+              by <= by + 1;
+            end if;
+          elsif bx = 0 then
+            -- GAME OVER
+            bx <= BALL_START_X;
+            by <= BALL_START_Y;
+          else
+            bx <= bx - BALL_STEP_SIZE;
+          end if;
+        end if;
+        
         -- END BALL LOGIC ==============================================================================================
         -- Paddle1 up/down
         if ui_in(5) = '1' and pdl1y >= PADDLE_STEP_SIZE then
