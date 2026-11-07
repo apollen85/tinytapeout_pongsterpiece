@@ -31,11 +31,11 @@ architecture rtl of tt_um_pongsterpiece is
   constant H_ACT : natural := 640;
   constant V_ACT : natural := 480;
   constant BALL_SIZE  : natural := 32;
-  signal ball_step_size : natural := 2;
+  signal ball_step_size : natural range 0 to 7;
   constant PADDLE_WIDTH : natural := 16;
   constant PADDLE_HEIGHT : natural := 128;
   constant PADDLE_EDGE_OFFSET : natural := 32;
-  signal paddle_step_size : natural := 3;
+  signal paddle_step_size : natural range 0 to 7;
 
   -- Ball parameters
   constant BALL_START_X : unsigned(9 downto 0) := to_unsigned(H_ACT/2 - BALL_SIZE/2, 10);
@@ -141,7 +141,7 @@ uio_oe  <= (others => '0');
       game_over <= '0';
       game_start_counter <= to_unsigned(0, 8);
       last_vsync <= '1';
-      ball_step_size <= 2;
+      ball_step_size <= 1;
       paddle_step_size <= 3;
     elsif rising_edge(clk) then
       last_vsync <= vsync;
@@ -163,14 +163,14 @@ uio_oe  <= (others => '0');
 
         else
           if ui_in(5) = '0' then
-            ball_step_size <= 2;
+            ball_step_size <= 1;
           else
-            ball_step_size <= 3;
+            ball_step_size <= 2;
           end if;
           if ui_in(6) = '0' then
             paddle_step_size <= 3;
           else
-            paddle_step_size <= 7;
+            paddle_step_size <= 6;
           end if;
           -- BALL LOGIC ====================================================================
           -- Vertical step
