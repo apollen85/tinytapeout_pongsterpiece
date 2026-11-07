@@ -5,7 +5,7 @@
 SOURCE_FILES = project.vhdl
 
 # Toplevel name of your VHDL project
-COCOTB_TOPLEVEL = tt_um_example
+COCOTB_TOPLEVEL = tt_um_pongsterpiece
 
 # Common
 WAVES ?= 1
